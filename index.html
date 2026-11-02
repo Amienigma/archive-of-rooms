@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Archive of Rooms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;1,300&family=Spectral:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{--void:#06090a;--wet:#0e1917;--hall:#16262a;--lamp:#d4e6dc;--dim:#6f8480;--amber:#c9a45c;--line:#1f3236;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--void);color:var(--lamp);font:300 17px/1.6 Spectral,Georgia,serif;min-height:100vh;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 70% 55% at 50% 38%,#1b3a38 0%,#0e1917 45%,#06090a 100%)}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;opacity:.16;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+main{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:56px 22px 90px}
+h1{font:300 clamp(40px,9vw,84px)/1 "Cormorant Garamond",Georgia,serif;letter-spacing:.02em;margin:0 0 10px;text-shadow:0 0 28px #7fd6c455;animation:hum 7s infinite}
+@keyframes hum{0%,92%,100%{opacity:1}93%{opacity:.55}94%{opacity:1}96%{opacity:.7}}
+@media(prefers-reduced-motion:reduce){h1{animation:none}.card{transition:none}}
+.sub{color:var(--dim);font-style:italic;max-width:46ch;margin:0 0 34px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+input[type=search]{flex:1 1 240px;background:transparent;border:0;border-bottom:1px solid var(--dim);color:var(--lamp);font:inherit;font-size:20px;padding:8px 2px;outline:none}
+input[type=search]:focus{border-color:var(--amber)}
+button{background:transparent;color:var(--lamp);border:1px solid var(--line);font:inherit;font-size:15px;padding:6px 14px;border-radius:20px;cursor:pointer}
+button:hover{border-color:var(--dim)}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+button[aria-pressed=true]{border-color:var(--amber);color:var(--amber)}
+.rooms{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:30px}
+.count{color:var(--dim);font-size:15px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:2px}
+.card{text-align:left;border:0;border-left:1px solid var(--line);border-radius:0;padding:14px 16px 16px;background:linear-gradient(90deg,#10201f66,transparent);transition:background .3s,border-color .3s;display:block;width:100%}
+.card:hover{background:linear-gradient(90deg,#1b3a3888,transparent);border-color:var(--amber)}
+.card b{font:500 24px/1.15 "Cormorant Garamond",Georgia,serif;display:block;font-weight:500}
+.card i{color:var(--dim);font-size:14px;display:block;margin-top:6px}
+.mark{color:var(--amber)}
+.veil{position:fixed;inset:0;z-index:20;background:#040607ee;display:none;overflow:auto;padding:max(30px,env(safe-area-inset-top,0px)) 20px 40px}
+.veil.on{display:block}
+.door{max-width:620px;margin:6vh auto 0;border-left:1px solid var(--amber);padding-left:22px}
+.door h2{font:300 clamp(32px,7vw,52px)/1.05 "Cormorant Garamond",Georgia,serif;margin:0 0 6px}
+.door .meta{color:var(--dim);font-style:italic;margin:0 0 18px}
+.door p{margin:0 0 20px}
+textarea{width:100%;min-height:110px;background:#0b1415;border:1px solid var(--line);color:var(--lamp);font:inherit;font-size:16px;padding:10px;resize:vertical}
+.row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.empty{color:var(--dim);font-style:italic;padding:40px 0}
+footer{margin-top:60px;color:var(--dim);font-size:14px;max-width:62ch}
+footer a{color:var(--dim)}
+</style>
+</head>
+<body>
+<main>
+<h1>The Archive of Rooms</h1>
+<p class="sub">A long hallway of closed doors. Each door is a DSM-5 diagnosis, tagged with its ICD-10-CM code. Walk slowly.</p>
+<div class="bar">
+<input type="search" id="q" placeholder="Search by name, code, or description" aria-label="Search">
+<button id="marks" aria-pressed="false">Kept</button>
+<button id="sort" aria-pressed="false">By code</button>
+<button id="imp">Import</button>
+<button id="exp">Export</button>
+<input type="file" id="file" accept=".json,application/json" hidden>
+</div>
+<div class="rooms" id="rooms" role="group" aria-label="Rooms"></div>
+<p class="count" id="count"></p>
+<div class="grid" id="grid"></div>
+<footer>
+Rooms follow the DSM-5 chapter order and codes are ICD-10-CM. Where a diagnosis has several codes (by severity, subtype or specifier), the code family is shown with an x, so check the official code set for the exact one. Summaries are short, original plain-language descriptions. This is not the DSM-5 text, it does not contain diagnostic criteria, and it cannot diagnose anyone. For the full manual, use the APA’s publication. If you’re struggling, a licensed clinician is the right door to knock on. Import accepts a JSON array of objects with room, name, code and summary, so you can load your own licensed data.
+</footer>
+</main>
+<div class="veil" id="veil" role="dialog" aria-modal="true"><div class="door" id="door"></div></div>
+<script>
+const R=[["Neurodevelopmental","The Nursery Corridor"],["Schizophrenia spectrum and psychotic","The Static Room"],["Bipolar and related","The Tide Room"],["Depressive","The Flooded Basement"],["Anxiety","The Stairwell"],["Obsessive-compulsive and related","The Loop Hallway"],["Trauma and stressor-related","The Aftermath Wing"],["Dissociative","The Mirror Annex"],["Somatic symptom","The Body Lobby"],["Feeding and eating","The Empty Kitchen"],["Sleep-wake","The Night Shift"],["Gender dysphoria","The Threshold"],["Disruptive, impulse-control and conduct","The Locked Gym"],["Substance-related and addictive","The Vending Alcove"],["Neurocognitive","The Fading Archive"],["Personality","The Long Gallery"],["Elimination","The Bathroom Hall"],["Sexual dysfunctions","The Dim Bedroom Hall"],["Paraphilic","The Curtained Wing"],["Other mental disorders","The Storage Room"],["Medication-induced movement","The Pharmacy Back Room"],["Other conditions that may be a focus of clinical attention","The Waiting Room"]];
+const ORD=[0,1,2,3,4,5,6,7,8,9,16,10,17,11,12,13,14,15,18,19,20,21];
+const D=[
+[0,"Autism spectrum disorder","F84.0","Differences in social communication and interaction, with restricted or repetitive patterns of behavior and interests, present from early development."],
+[0,"Attention-deficit/hyperactivity disorder","F90.x","A persistent pattern of inattention and/or hyperactivity-impulsivity that interferes with functioning across settings."],
+[0,"Specific learning disorder","F81.x","Ongoing difficulty learning reading, writing or math skills that is well below what is expected for age."],
+[0,"Tourette’s disorder","F95.2","Multiple motor tics and at least one vocal tic, beginning in childhood and lasting over a year."],
+[0,"Intellectual disability","F70–F79","Limits in reasoning, learning and everyday adaptive skills that begin during development."],
+[1,"Schizophrenia","F20.9","A long-lasting disorder involving some mix of delusions, hallucinations, disorganized speech or behavior, and reduced expression or motivation."],
+[1,"Schizoaffective disorder","F25.x","Psychotic symptoms occurring alongside a major mood episode, with psychosis also present without mood symptoms at times."],
+[1,"Schizophreniform disorder","F20.81","Schizophrenia-like symptoms lasting between one and six months."],
+[1,"Brief psychotic disorder","F23","A sudden psychotic episode lasting at least a day but under a month, followed by return to prior functioning."],
+[1,"Delusional disorder","F22","Fixed false beliefs lasting a month or more without the wider picture of schizophrenia."],
+[2,"Bipolar I disorder","F31.x","Defined by at least one manic episode; depressive episodes are common but not required."],
+[2,"Bipolar II disorder","F31.81","At least one hypomanic and one major depressive episode, without a full manic episode."],
+[2,"Cyclothymic disorder","F34.0","Two or more years of numerous mood swings that fall short of full manic or depressive episodes."],
+[3,"Major depressive disorder","F32.x / F33.x","Episodes of low mood or loss of interest, with changes in sleep, energy, appetite, concentration or self-worth."],
+[3,"Persistent depressive disorder","F34.1","A depressed mood lasting most days for two years or longer."],
+[3,"Premenstrual dysphoric disorder","N94.3","Marked mood and physical symptoms that arise in the premenstrual phase and ease soon after bleeding starts."],
+[3,"Disruptive mood dysregulation disorder","F34.81","Frequent severe temper outbursts and persistently irritable mood in children and adolescents."],
+[4,"Generalized anxiety disorder","F41.1","Excessive, hard-to-control worry about many things over at least six months."],
+[4,"Panic disorder","F41.0","Recurrent unexpected panic attacks followed by ongoing worry about more attacks or their consequences."],
+[4,"Social anxiety disorder","F40.10","Intense fear of social situations where others might judge you."],
+[4,"Agoraphobia","F40.00","Fear of places or situations where escape or help might feel unavailable."],
+[4,"Specific phobia","F40.2x","Marked fear of a particular object or situation, out of proportion to the actual danger."],
+[4,"Separation anxiety disorder","F93.0","Excessive fear about separation from attachment figures, beyond what suits the person’s age."],
+[4,"Selective mutism","F94.0","Consistent failure to speak in particular social situations despite speaking elsewhere."],
+[5,"Obsessive-compulsive disorder","F42.2","Unwanted intrusive thoughts and repetitive behaviors or mental acts done to relieve distress."],
+[5,"Body dysmorphic disorder","F45.22","Preoccupation with perceived flaws in appearance that others barely notice."],
+[5,"Hoarding disorder","F42.3","Persistent difficulty discarding possessions, causing clutter that disrupts living spaces."],
+[5,"Trichotillomania","F63.3","Recurrent hair pulling that leads to hair loss, despite attempts to stop."],
+[5,"Excoriation disorder","F42.4","Recurrent skin picking that causes lesions, despite attempts to stop."],
+[6,"Posttraumatic stress disorder","F43.10","Lasting intrusion, avoidance, mood changes and heightened arousal after exposure to a traumatic event."],
+[6,"Acute stress disorder","F43.0","Trauma-related symptoms that appear within the first month after the event."],
+[6,"Adjustment disorders","F43.2x","Emotional or behavioral symptoms in response to an identifiable stressor, out of proportion or impairing."],
+[6,"Reactive attachment disorder","F94.1","A pattern of emotionally withdrawn behavior toward caregivers, linked to severe neglect in early life."],
+[6,"Prolonged grief disorder","F43.81","Intense, persistent yearning or preoccupation after a death, lasting well beyond cultural norms."],
+[7,"Dissociative identity disorder","F44.81","Disruption of identity into two or more distinct states, with gaps in memory."],
+[7,"Dissociative amnesia","F44.0","Inability to recall important personal information, beyond ordinary forgetting."],
+[7,"Depersonalization/derealization disorder","F48.1","Persistent feelings of detachment from oneself or from the surroundings, with reality testing intact."],
+[8,"Somatic symptom disorder","F45.1","Distressing physical symptoms paired with excessive thoughts, feelings or behaviors about them."],
+[8,"Illness anxiety disorder","F45.21","Preoccupation with having or developing a serious illness, with few or mild symptoms."],
+[8,"Functional neurological symptom disorder","F44.4x","Neurological-seeming symptoms, such as weakness or seizures, that don’t fit recognized neurological disease."],
+[9,"Anorexia nervosa","F50.0x","Restricted intake, intense fear of weight gain, and a disturbed experience of body weight or shape."],
+[9,"Bulimia nervosa","F50.2","Recurrent binge eating followed by compensatory behaviors, with self-worth tied to shape and weight."],
+[9,"Binge-eating disorder","F50.81","Recurrent episodes of eating large amounts with a sense of lost control, without regular compensation."],
+[9,"Avoidant/restrictive food intake disorder","F50.82","Limited eating driven by sensory aversion, low interest or fear of consequences, not body image."],
+[10,"Insomnia disorder","F51.0x","Ongoing trouble falling or staying asleep that causes daytime distress or impairment."],
+[10,"Narcolepsy","G47.4x","Recurrent irrepressible sleep episodes, sometimes with sudden loss of muscle tone."],
+[10,"Nightmare disorder","F51.5","Repeated, vivid, distressing dreams that wake the person with clear recall."],
+[11,"Gender dysphoria","F64.x","Marked distress from a mismatch between experienced gender and gender assigned at birth."],
+[12,"Oppositional defiant disorder","F91.3","A recurring pattern of angry mood, argumentative behavior or vindictiveness, mainly toward authority figures."],
+[12,"Conduct disorder","F91.x","A repeated pattern of violating others’ rights or major age-appropriate rules."],
+[12,"Intermittent explosive disorder","F63.81","Recurrent impulsive outbursts of aggression that are out of proportion to the trigger."],
+[12,"Kleptomania","F63.2","Recurrent failure to resist urges to steal items not needed for use or value."],
+[13,"Alcohol use disorder","F10.x","A problematic pattern of alcohol use causing impairment or distress, with levels from mild to severe."],
+[13,"Opioid use disorder","F11.x","A problematic pattern of opioid use causing impairment or distress, with levels from mild to severe."],
+[13,"Gambling disorder","F63.0","Persistent, recurrent gambling behavior that causes significant problems."],
+[14,"Delirium","F05","An acute disturbance in attention and awareness that develops over hours to days and fluctuates."],
+[14,"Major neurocognitive disorder","F02.x","A significant decline in one or more areas of thinking that interferes with independence."],
+[15,"Paranoid personality disorder","F60.0","A pervasive distrust and suspicion of others’ motives."],
+[15,"Schizoid personality disorder","F60.1","A pervasive detachment from relationships and a narrow range of expressed emotion."],
+[15,"Schizotypal personality disorder","F21","Discomfort with close relationships, odd beliefs or perceptions, and eccentric behavior."],
+[15,"Antisocial personality disorder","F60.2","A pervasive pattern of disregard for and violation of others’ rights, beginning by age fifteen."],
+[15,"Borderline personality disorder","F60.3","Instability in relationships, self-image and emotion, with marked impulsivity."],
+[15,"Histrionic personality disorder","F60.4","Excessive emotionality and attention seeking."],
+[15,"Narcissistic personality disorder","F60.81","A pattern of grandiosity, need for admiration and low empathy."],
+[15,"Avoidant personality disorder","F60.6","Social inhibition, feelings of inadequacy and sensitivity to negative evaluation."],
+[15,"Dependent personality disorder","F60.7","An excessive need to be taken care of, leading to submissive and clinging behavior."],
+[15,"Obsessive-compulsive personality disorder","F60.5","A preoccupation with orderliness, perfectionism and control at the expense of flexibility."],
+[0,"Global developmental delay","F88","Delayed milestones in several areas of development in a child too young for standardized testing."],
+[0,"Language disorder","F80.2","Ongoing difficulty understanding or producing language that is below age expectations."],
+[0,"Speech sound disorder","F80.0","Persistent trouble producing speech sounds clearly enough to be understood."],
+[0,"Childhood-onset fluency disorder","F80.81","Stuttering: disruptions in the normal flow and timing of speech, starting in early development."],
+[0,"Social (pragmatic) communication disorder","F80.82","Difficulty with the social use of language and nonverbal communication, without the restricted patterns of autism."],
+[0,"Developmental coordination disorder","F82","Motor skills well below what’s expected for age, affecting daily activities."],
+[0,"Stereotypic movement disorder","F98.4","Repetitive, seemingly driven movements such as rocking or hand flapping that interfere with activities."],
+[0,"Persistent motor or vocal tic disorder","F95.1","Motor or vocal tics (not both) lasting more than a year."],
+[1,"Catatonia associated with another mental disorder","F06.1","A cluster of marked motor and behavioral signs such as stupor, mutism or posturing, tied to another condition."],
+[3,"Unspecified depressive disorder","F32.A","Depressive symptoms causing distress that don’t fit a specific depressive diagnosis."],
+[4,"Unspecified anxiety disorder","F41.9","Anxiety symptoms causing distress that don’t fit a specific anxiety diagnosis."],
+[6,"Disinhibited social engagement disorder","F94.2","Overly familiar behavior toward unfamiliar adults, linked to early social neglect."],
+[8,"Psychological factors affecting other medical conditions","F54","Psychological or behavioral factors that worsen the course or treatment of a medical condition."],
+[8,"Factitious disorder imposed on self","F68.10","Falsifying or inducing illness signs in oneself, without an obvious external reward."],
+[9,"Pica","F50.89","Ongoing eating of non-food substances in a way that’s inappropriate for development."],
+[9,"Rumination disorder","F98.21","Repeated regurgitation of food, which may be rechewed, reswallowed or spat out."],
+[16,"Enuresis","F98.0","Repeated passing of urine in bed or clothes in a child past the age of expected control."],
+[16,"Encopresis","F98.1","Repeated passing of stool in inappropriate places in a child past the age of expected control."],
+[10,"Obstructive sleep apnea hypopnea","G47.33","Repeated airway blockage during sleep that disrupts breathing and rest."],
+[10,"Restless legs syndrome","G25.81","An urge to move the legs, usually at rest or in the evening, relieved by movement."],
+[10,"Non-REM sleep arousal disorder, sleepwalking type","F51.3","Repeated episodes of rising and walking during sleep with limited awareness."],
+[10,"Non-REM sleep arousal disorder, sleep terror type","F51.4","Abrupt arousals from sleep with intense fear and little recall."],
+[10,"REM sleep behavior disorder","G47.52","Acting out dreams through movement or vocalization during REM sleep."],
+[17,"Erectile disorder","F52.21","Persistent difficulty getting or keeping an erection sufficient for sexual activity."],
+[17,"Premature (early) ejaculation","F52.4","Ejaculation that happens sooner than wanted, causing distress."],
+[17,"Delayed ejaculation","F52.32","Marked delay or inability to ejaculate despite adequate stimulation."],
+[17,"Female orgasmic disorder","F52.31","Marked delay, rarity or absence of orgasm, or much reduced intensity."],
+[17,"Female sexual interest/arousal disorder","F52.22","Reduced or absent sexual interest or arousal that causes distress."],
+[17,"Genito-pelvic pain/penetration disorder","F52.6","Persistent pain, fear or tension tied to vaginal penetration."],
+[12,"Pyromania","F63.1","Repeated deliberate fire setting driven by tension and fascination rather than gain or anger."],
+[13,"Cannabis use disorder","F12.x","A problematic pattern of cannabis use causing impairment or distress, graded by severity."],
+[13,"Stimulant use disorder","F14.x / F15.x","A problematic pattern of cocaine or amphetamine-type stimulant use causing impairment or distress."],
+[13,"Tobacco use disorder","F17.2x","A problematic pattern of tobacco use with craving, tolerance or withdrawal."],
+[13,"Sedative, hypnotic or anxiolytic use disorder","F13.x","A problematic pattern of use of these medications causing impairment or distress."],
+[13,"Hallucinogen use disorder","F16.x","A problematic pattern of hallucinogen use causing impairment or distress."],
+[13,"Inhalant use disorder","F18.x","A problematic pattern of inhaling volatile substances causing impairment or distress."],
+[14,"Mild neurocognitive disorder","F06.7x","A modest decline in thinking skills that doesn’t yet impair independence."],
+[14,"Major NCD due to Alzheimer’s disease","G30.9 + F02.8x","Gradual decline in memory and other thinking skills attributed to Alzheimer’s disease."],
+[14,"Major NCD with Lewy bodies","G31.83 + F02.8x","Cognitive decline with fluctuating alertness, visual hallucinations and parkinsonian features."],
+[14,"Major frontotemporal NCD","G31.09 + F02.8x","Decline led by changes in behavior, personality or language."],
+[14,"Major vascular NCD","F01.5x","Cognitive decline linked to cerebrovascular disease."],
+[15,"Personality change due to another medical condition","F07.0","A lasting change in personality caused by a medical condition."],
+[18,"Voyeuristic disorder","F65.3","Recurrent arousal from secretly observing an unsuspecting person, acted on or causing distress."],
+[18,"Exhibitionistic disorder","F65.2","Recurrent arousal from exposing oneself to an unsuspecting person, acted on or causing distress."],
+[18,"Frotteuristic disorder","F65.81","Recurrent arousal from touching or rubbing against a non-consenting person, acted on or causing distress."],
+[18,"Sexual masochism disorder","F65.51","Recurrent arousal from being humiliated, bound or made to suffer, causing distress or impairment."],
+[18,"Sexual sadism disorder","F65.52","Recurrent arousal from another’s suffering, acted on with a non-consenting person or causing distress."],
+[18,"Pedophilic disorder","F65.4","Recurrent arousal toward prepubertal children, acted on or causing marked distress. Needs specialist assessment."],
+[18,"Fetishistic disorder","F65.0","Recurrent arousal from nonliving objects or specific body parts, causing distress or impairment."],
+[18,"Transvestic disorder","F65.1","Recurrent arousal from cross-dressing, causing distress or impairment."],
+[19,"Other specified mental disorder","F99","Distressing symptoms that fit no specific category, with the clinician naming the reason."],
+[19,"Unspecified mental disorder","F99","Distressing symptoms where there isn’t enough information to be more specific."],
+[20,"Medication-induced acute dystonia","G24.02","Sudden sustained muscle contractions or abnormal postures after taking a medication."],
+[20,"Neuroleptic-induced parkinsonism","G21.11","Tremor, rigidity or slowed movement after antipsychotic or similar treatment."],
+[20,"Medication-induced acute akathisia","G25.71","Inner restlessness and an urge to move after taking a medication."],
+[20,"Tardive dyskinesia","G24.01","Involuntary movements, often of the face and tongue, after prolonged exposure to certain medications."],
+[20,"Neuroleptic malignant syndrome","G21.0","A rare, serious reaction to antipsychotics with fever, rigidity and altered awareness. A medical emergency."],
+[21,"Relationship distress with spouse or intimate partner","Z63.0","Problems in a relationship that are a focus of clinical attention."],
+[21,"Uncomplicated bereavement","Z63.4","Normal grief after a death that is a focus of clinical attention."],
+[21,"Phase of life problem","Z60.0","Difficulty adjusting to a life transition."],
+[21,"Borderline intellectual functioning","R41.83","Intellectual functioning just above the range for intellectual disability."],
+[21,"Malingering","Z76.5","Intentionally faking or exaggerating symptoms for an external reward."]
+];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let U={marks:{},notes:{},custom:[]},room=-1,onlyMarks=false,bySort=false,all=[];
+try{const s=localStorage.getItem("archive_v1");if(s)U=Object.assign(U,JSON.parse(s))}catch(e){}
+const save=()=>{try{localStorage.setItem("archive_v1",JSON.stringify(U))}catch(e){}};
+function build(){all=D.map(d=>({room:d[0],name:d[1],code:d[2],summary:d[3]}));U.custom.forEach(c=>{let r=R.findIndex(x=>x[0].toLowerCase()===String(c.room).toLowerCase());if(r<0){R.push([String(c.room),"The Unnamed Room"]);r=R.length-1}all.push({room:r,name:c.name,code:c.code,summary:c.summary})})}
+function chips(){$("rooms").innerHTML=[`<button data-r="-1" aria-pressed="${room==-1}">Every room</button>`].concat(ORD.concat(R.map((_,i)=>i).filter(i=>!ORD.includes(i))).map(i=>`<button data-r="${i}" aria-pressed="${room==i}">${esc(R[i][1])}</button>`)).join("")}
+function draw(){const q=$("q").value.trim().toLowerCase();const list=all.map((d,i)=>({...d,i})).filter(d=>(room<0||d.room==room)&&(!onlyMarks||U.marks[d.name])&&(!q||(d.name+" "+d.code+" "+d.summary+" "+R[d.room][0]).toLowerCase().includes(q)));
+if(bySort)list.sort((a,b)=>a.code.localeCompare(b.code,undefined,{numeric:true}));$("count").textContent=list.length+(list.length==1?" door":" doors");
+$("grid").innerHTML=list.length?list.map(d=>`<button class="card" data-i="${d.i}"><b>${U.marks[d.name]?'<span class="mark">◆ </span>':""}${esc(d.name)}</b><i>ICD-10-CM ${esc(d.code)}, ${esc(R[d.room][1])}</i></button>`).join(""):'<p class="empty">Nothing here. The hallway continues.</p>'}
+function open(i){const d=all[i];$("door").innerHTML=`<h2>${esc(d.name)}</h2><p class="meta">${esc(R[d.room][1])}, ${esc(R[d.room][0])}. ICD-10-CM ${esc(d.code)}</p><p>${esc(d.summary)}</p><label for="note" class="meta">Your notes, saved only in this browser</label><textarea id="note"></textarea><div class="row"><button id="keep" aria-pressed="${!!U.marks[d.name]}">${U.marks[d.name]?"Kept":"Keep"}</button><button id="close">Close</button></div>`;
+$("note").value=U.notes[d.name]||"";$("note").oninput=e=>{U.notes[d.name]=e.target.value;save()};
+$("keep").onclick=()=>{U.marks[d.name]=!U.marks[d.name];if(!U.marks[d.name])delete U.marks[d.name];save();open(i);draw()};
+$("close").onclick=shut;$("veil").classList.add("on");$("close").focus()}
+function shut(){$("veil").classList.remove("on");draw()}
+$("grid").onclick=e=>{const b=e.target.closest(".card");if(b)open(+b.dataset.i)};
+$("rooms").onclick=e=>{const b=e.target.closest("button");if(!b)return;room=+b.dataset.r;chips();draw()};
+$("q").oninput=draw;
+$("sort").onclick=e=>{bySort=!bySort;e.target.setAttribute("aria-pressed",bySort);draw()};
+$("marks").onclick=e=>{onlyMarks=!onlyMarks;e.target.setAttribute("aria-pressed",onlyMarks);draw()};
+$("veil").onclick=e=>{if(e.target.id=="veil")shut()};
+document.onkeydown=e=>{if(e.key=="Escape")shut()};
+$("exp").onclick=()=>{const t=JSON.stringify(all.map(d=>({room:R[d.room][0],name:d.name,code:d.code,summary:d.summary})),null,2);const a=document.createElement("a");a.href="data:application/json;charset=utf-8,"+encodeURIComponent(t);a.download="archive.json";a.click()};
+$("imp").onclick=()=>$("file").click();
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const a=JSON.parse(r.result);if(!Array.isArray(a))throw 0;a.forEach(x=>{if(x&&x.name&&x.room)U.custom.push({room:x.room,name:String(x.name),code:String(x.code||""),summary:String(x.summary||"")})});save();build();chips();draw()}catch(err){$("count").textContent="That file wasn’t a JSON array of entries."}};r.readAsText(f);e.target.value=""};
+build();chips();draw();
+</script>
+</body>
+</html>
